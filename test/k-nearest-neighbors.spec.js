@@ -68,7 +68,7 @@ describe('K Nearest Neighbors', () => {
   });
   it('Lots of points', () => {
     const rect = new Rectangle(50, 50, 100, 100);
-    let qt = new QuadTree(rect, 100);
+    let qt = new QuadTree(rect, 10000);
 
     for(var i=0; i<10000; ++i) {
       const x = Math.random() * 100;
@@ -82,7 +82,7 @@ describe('K Nearest Neighbors', () => {
   });
   it('Even more points', () => {
     const rect = new Rectangle(500, 500, 1000, 1000);
-    let qt = new QuadTree(rect, 100);
+    let qt = new QuadTree(rect, 100000);
 
     for(var i=0; i<100000; ++i) {
       const x = Math.random() * 1000;
@@ -93,19 +93,5 @@ describe('K Nearest Neighbors', () => {
     const point = new Point(500, 500);
 
     expect(qt.closest(point, 100000).length).to.equal(100000);
-  });
-  it('Stupid numnber of points', () => {
-    const rect = new Rectangle(500, 500, 1000, 1000);
-    let qt = new QuadTree(rect, 100);
-
-    for(var i=0; i<1000000; ++i) {
-      const x = Math.random() * 1000;
-      const y = Math.random() * 1000;
-      qt.insert(new Point(x, y));
-    }
-
-    const point = new Point(500, 500);
-
-    expect(qt.closest(point, 10).length).to.equal(10);
   });
 });

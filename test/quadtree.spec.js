@@ -174,9 +174,11 @@ describe('QuadTree', () => {
       it('returns true when added to northwest', () => {
         expect(quadtree.insert(new Point(100 - 10, 200 - 10))).to.be.true;
       });
-      it('correctly adds to northeast', () => {
+      it('correctly adds to northeast and then divides to southeast and southwest', () => {
         quadtree.insert(new Point(100 + 5, 200 - 10));
-        expect(quadtree.northeast.points).to.have.length(1);
+        expect(quadtree.northeast.points).to.have.length(0);
+        expect(quadtree.northeast.southwest.points).to.have.length(4);
+        expect(quadtree.northeast.southeast.points).to.have.length(1);
       });
       it('returns true when added to northeast', () => {
         expect(quadtree.insert(new Point(100 + 5, 200 - 10))).to.be.true;

@@ -43,38 +43,16 @@ describe('QuadTree', () => {
       it('new object inherits capacity', () => {
         expect(obj.capacity).to.equal(quadtree.capacity);
       })
-      it('new object ne inherits length', () => {
-        expect(obj.ne.points.length).to.equal(quadtree.northeast.points.length);
-      })
-      it('new object nw inherits length', () => {
-        expect(obj.nw.points.length).to.equal(quadtree.northwest.points.length);
-      })
-      it('new object se inherits length', () => {
-        expect(obj.se.points.length).to.equal(quadtree.southeast.points.length);
-      })
-      it('new object sw inherits length', () => {
-        expect(obj.sw.points.length).to.equal(quadtree.southwest.points.length);
-      })
-      it('objects inherit user data', () => {
-        expect(obj.ne.points[0].userData.index).to.equal(quadtree.northeast.points[0].userData.index);
-      })
-      it('child objects aren\'t divided', () => {
-        expect(obj.nw.ne).to.be.undefined;
-      })
     });
     it('is a commutative operation', () => {
-      let quadtree = QuadTree.create(0, 0, 800, 600, 4);
-      for (let i = 0; i < 100; ++i) {
+      let quadtree = QuadTree.create(400, 300, 800, 600, 4);
+      for (let i = 0; i < 6; ++i) {
         quadtree.insert(new Point(Math.random() * 800, Math.random() * 600));
       }
       let created = quadtree.toJSON();
       let result = QuadTree.fromJSON(created);
       expect(result).to.deep.equal(quadtree);
     })
-    it('saves all data to a JSON object', () => {
-      const obj = quadtree.toJSON();
-      expect(obj.ne.divided).to.be.undefined;
-    });
     it('loads properly from a JSON object', () => {
       const obj = quadtree.toJSON();
       const test = QuadTree.fromJSON(obj);

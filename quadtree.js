@@ -132,7 +132,7 @@ class Circle {
 }
 
 class QuadTree {
-  constructor(boundary, capacity) {
+  constructor(boundary, capacity, depth = 10) {
     if (!boundary) {
       throw TypeError('boundary is null or undefined');
     }
@@ -149,6 +149,7 @@ class QuadTree {
     this.capacity = capacity;
     this.points = [];
     this.divided = false;
+    this.depth = depth;
   }
 
   get children() {
@@ -190,112 +191,67 @@ class QuadTree {
     throw new TypeError('Invalid parameters');
   }
 
-  toJSON(isChild) {
-    let obj = { points: this.points };
-    if (this.divided) {
-      if (this.northeast.points.length > 0) {
-        obj.ne = this.northeast.toJSON(true);
-      }
-      if (this.northwest.points.length > 0) {
-        obj.nw = this.northwest.toJSON(true);
-      }
-      if (this.southeast.points.length > 0) {
-        obj.se = this.southeast.toJSON(true);
-      }
-      if (this.southwest.points.length > 0) {
-        obj.sw = this.southwest.toJSON(true);
-      }
-    }
-    if (!isChild) {
-      obj.capacity = this.capacity;
-      obj.x = this.boundary.x;
-      obj.y = this.boundary.y;
-      obj.w = this.boundary.w;
-      obj.h = this.boundary.h;
-    }
+  toJSON() {
+    let allPoints = [];
+    this.forEach(p => allPoints.push(p));
+
+    let obj = {}
+
+    obj.points = allPoints;
+    obj.x = this.boundary.x;
+    obj.y = this.boundary.y;
+    obj.w = this.boundary.w;
+    obj.h = this.boundary.h;
+    obj.depth = this.depth;
+    obj.capacity = this.capacity;
+
     return obj;
   }
 
-  static fromJSON(obj, x, y, w, h, capacity) {
-    if (typeof x === "undefined") {
-      if ("x" in obj) {
-        x = obj.x;
-        y = obj.y;
-        w = obj.w;
-        h = obj.h;
-        capacity = obj.capacity;
-      } else {
-        throw TypeError("JSON missing boundary information");
-      }
-    }
-    let qt = new QuadTree(new Rectangle(x, y, w, h), capacity);
-    qt.points = obj.points;
+  static fromJSON(obj) {
     if (
-      "ne" in obj ||
-      "nw" in obj ||
-      "se" in obj ||
-      "sw" in obj
-    ) {
-      let x = qt.boundary.x;
-      let y = qt.boundary.y;
-      let w = qt.boundary.w / 2;
-      let h = qt.boundary.h / 2;
+      obj.x == undefined ||
+      obj.y == undefined ||
+      obj.w == undefined ||
+      obj.h == undefined
+      ) {
+        throw TypeError("JSON missing boundary information");
+      };
 
-      if ("ne" in obj) {
-        qt.northeast = QuadTree.fromJSON(obj.ne, x + w/2, y - h/2, w, h, capacity);
-      } else {
-        qt.northeast = new QuadTree(qt.boundary.subdivide('ne'), capacity);
-      }
-      if ("nw" in obj) {
-        qt.northwest = QuadTree.fromJSON(obj.nw, x - w/2, y - h/2, w, h, capacity);
-      } else {
-        qt.northwest = new QuadTree(qt.boundary.subdivide('nw'), capacity);
-      }
-      if ("se" in obj) {
-        qt.southeast = QuadTree.fromJSON(obj.se, x + w/2, y + h/2, w, h, capacity);
-      } else {
-        qt.southeast = new QuadTree(qt.boundary.subdivide('se'), capacity);
-      }
-      if ("sw" in obj) {
-        qt.southwest = QuadTree.fromJSON(obj.sw, x - w/2, y + h/2, w, h, capacity);
-      } else {
-        qt.southwest = new QuadTree(qt.boundary.subdivide('sw'), capacity);
-      }
+    let qt = new QuadTree(new Rectangle(obj.x, obj.y, obj.w,obj.h), obj.capacity, obj.depth);
 
-      qt.divided = true;
-    }
+    obj.points.forEach(p => qt.insert(p));
+
     return qt;
   }
 
   subdivide() {
-    this.northeast = new QuadTree(this.boundary.subdivide('ne'), this.capacity);
-    this.northwest = new QuadTree(this.boundary.subdivide('nw'), this.capacity);
-    this.southeast = new QuadTree(this.boundary.subdivide('se'), this.capacity);
-    this.southwest = new QuadTree(this.boundary.subdivide('sw'), this.capacity);
+    this.northwest = new QuadTree(this.boundary.subdivide('nw'), this.capacity, this.depth - 1);
+    this.southeast = new QuadTree(this.boundary.subdivide('se'), this.capacity, this.depth - 1);
+    this.northeast = new QuadTree(this.boundary.subdivide('ne'), this.capacity, this.depth - 1);
+    this.southwest = new QuadTree(this.boundary.subdivide('sw'), this.capacity, this.depth - 1);
 
     this.divided = true;
   }
 
   insert(point) {
+    if (this.divided) {
+      return this.children.reduce((p, c) => p || c.insert(point), false);
+    }
+
     if (!this.boundary.contains(point)) {
       return false;
     }
 
-    if (this.points.length < this.capacity) {
+    if (this.depth == 0 || this.points.length < this.capacity) {
       this.points.push(point);
       return true;
     }
 
-    if (!this.divided) {
-      this.subdivide();
-    }
-
-    return (
-      this.northeast.insert(point) ||
-      this.northwest.insert(point) ||
-      this.southeast.insert(point) ||
-      this.southwest.insert(point)
-    );
+    this.subdivide();
+    let p;
+    while (p = this.points.shift()) this.insert(p);
+    return this.insert(point);
   }
 
   query(range, found) {

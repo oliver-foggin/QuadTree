@@ -8,7 +8,7 @@ function setup() {
 
     qtree = QuadTree.create();
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 2000; i++) {
         let p = new Point(
             Math.round(Math.random() * width),
             Math.round(Math.random() * height),
